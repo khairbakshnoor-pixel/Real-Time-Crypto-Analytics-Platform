@@ -1,46 +1,30 @@
-import requests
 import json
-from datetime import datetime
+from datetime import datetime, timezone
+from pathlib import Path
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-}
+import requests
 
 API_URL = "https://api.coingecko.com/api/v3/coins/markets"
-
 PARAMS = {
-    "vs_currency": "usd",
-    "order": "market_cap_desc",
-    "per_page": 20,
-    "page": 1,
-    "sparkline": "false"
+    "vs_currency": "usd", "order": "market_cap_desc",
+    "per_page": 20, "page": 1, "sparkline": "false",
 }
 
-def extract_data():
-    try:
-        response = requests.get(API_URL, params=PARAMS)
-        
-        if response.status_code == 200:
-            data = response.json()
-            print("✅ Data extracted successfully")
 
-            # Save raw JSON
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"raw_data/crypto_raw_{timestamp}.json"
-
-            with open(filename, "w") as f:
-                json.dump(data, f, indent=4)
-
-            print(f"✅ Raw data saved to {filename}")
-            return data
-
-        else:
-            print("❌ API Error:", response.status_code)
-            return None
-
-    except Exception as e:
-        print("❌ Extraction failed:", e)
-        return None
+def extract_data(save_raw=True):
+    response = requests.get(API_URL, params=PARAMS, timeout=20)
+    response.raise_for_status()
+    data = response.json()
+    if not isinstance(data, list) or not data or not all(isinstance(coin, dict) for coin in data):
+        raise ValueError("CoinGecko returned an empty or invalid market response")
+    if save_raw:
+        directory = Path(__file__).resolve().parent / "raw_data"
+        directory.mkdir(exist_ok=True)
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
+        (directory / f"crypto_raw_{timestamp}.json").write_text(
+            json.dumps(data, indent=2), encoding="utf-8"
+        )
+    return data
 
 
 if __name__ == "__main__":

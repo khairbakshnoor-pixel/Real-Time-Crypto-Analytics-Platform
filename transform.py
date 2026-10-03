@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 def transform_data(raw_data):
     if not raw_data:
-        print("❌ No data to transform")
+        print("No data to transform")
         return None
 
     transformed = []
@@ -11,18 +11,20 @@ def transform_data(raw_data):
         try:
             # Remove nulls safely using .get()
             coin_id = coin.get("id")
+            if not coin_id:
+                continue
             symbol = coin.get("symbol")
             name = coin.get("name")
-            current_price = float(coin.get("current_price", 0))
-            market_cap = int(coin.get("market_cap", 0))
-            total_volume = int(coin.get("total_volume", 0))
-            price_change_24h = float(coin.get("price_change_percentage_24h", 0))
-            market_cap_rank = coin.get("market_cap_rank", 0)
+            current_price = float(coin.get("current_price") or 0)
+            market_cap = int(coin.get("market_cap") or 0)
+            total_volume = int(coin.get("total_volume") or 0)
+            price_change_24h = float(coin.get("price_change_percentage_24h") or 0)
+            market_cap_rank = coin.get("market_cap_rank") or 0
 
             # Feature engineering
             volatility_score = abs(price_change_24h) * total_volume
 
-            extracted_at = datetime.now()
+            extracted_at = datetime.now(timezone.utc).isoformat()
 
             # Return as dictionary for compatibility with load.py
             transformed.append({
@@ -39,7 +41,7 @@ def transform_data(raw_data):
             })
 
         except Exception as e:
-            print("⚠ Skipping coin due to error:", e)
+            print("Skipping coin due to error:", e)
 
-    print("✅ Data transformed successfully")
+    print("Data transformed successfully")
     return transformed

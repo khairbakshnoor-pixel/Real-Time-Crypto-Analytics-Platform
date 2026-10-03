@@ -1,38 +1,28 @@
+import logging
+
 from apscheduler.schedulers.blocking import BlockingScheduler
 from extract import extract_data
 from transform import transform_data
 from load import load_data
-import logging
-from datetime import datetime
 
-# Setup logging
-logging.basicConfig(
-    filename="logs/etl.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logger = logging.getLogger(__name__)
 
-def run_etl():
+
+def run_etl(save_raw=True):
     try:
-        print("🚀 Running ETL...")
-        logging.info("ETL Started")
-
-        raw = extract_data()
-        transformed = transform_data(raw)
+        transformed = transform_data(extract_data(save_raw=save_raw))
+        if not transformed:
+            raise ValueError("No valid market records to load")
         load_data(transformed)
-
-        logging.info("ETL Completed Successfully")
-        print("✅ ETL Completed")
-
-    except Exception as e:
-        logging.error(f"ETL Failed: {e}")
-        print("❌ ETL Failed:", e)
+        return True, "Market data updated"
+    except Exception:
+        logger.exception("ETL failed")
+        return False, "Market update failed. Previously stored data is shown, if available."
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     scheduler = BlockingScheduler()
-    scheduler.add_job(run_etl, 'interval', minutes=5)
-
-    print("⏳ ETL Scheduler started (runs every 5 minutes)")
-    run_etl()  # run immediately once
+    scheduler.add_job(run_etl, "interval", minutes=5, max_instances=1)
+    run_etl()
     scheduler.start()

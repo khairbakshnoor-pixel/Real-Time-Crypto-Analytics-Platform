@@ -1,13 +1,14 @@
-import sqlite3
+from database import get_connection, setup_database
 
 def load_data(transformed_data):
     if not transformed_data:
-        print("❌ No data to load")
+        print("No data to load")
         return
 
     connection = None
     try:
-        connection = sqlite3.connect('crypto.db') 
+        setup_database()
+        connection = get_connection()
         cursor = connection.cursor()
 
         # Positional placeholders (?) are more stable in SQLite
@@ -38,10 +39,10 @@ def load_data(transformed_data):
 
         cursor.executemany(insert_query, data_to_insert)
         connection.commit()
-        print(f"✅ Data loaded into SQLite successfully ({len(data_to_insert)} rows)")
+        print(f"Data loaded into SQLite successfully ({len(data_to_insert)} rows)")
 
     except Exception as e:
-        print("❌ Load failed:", e)
+        raise RuntimeError("Database load failed") from e
     finally:
         if connection:
             connection.close()

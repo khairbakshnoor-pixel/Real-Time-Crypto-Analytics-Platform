@@ -1,12 +1,8 @@
-import sqlite3
+from database import get_connection
 import pandas as pd
 
 # Database file ka naam
-DB_PATH = 'crypto.db'
 
-def get_connection():
-    """SQLite connection create karne ke liye helper function"""
-    return sqlite3.connect(DB_PATH)
 
 # 1️⃣ Top 5 Gainers (24h) [cite: 96]
 def top_5_gainers():

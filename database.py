@@ -1,7 +1,15 @@
 import sqlite3
+import os
+from pathlib import Path
+
+DB_PATH = Path(os.environ.get("CRYPTO_DB_PATH", Path(__file__).resolve().parent / "crypto.db"))
+
+
+def get_connection():
+    return sqlite3.connect(DB_PATH, timeout=30)
 
 def setup_database():
-    conn = sqlite3.connect('crypto.db')
+    conn = get_connection()
     cursor = conn.cursor()
     
     # Table with volatility_score column

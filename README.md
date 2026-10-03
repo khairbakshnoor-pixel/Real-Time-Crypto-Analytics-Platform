@@ -1,302 +1,55 @@
-# 🚀 Real-Time Crypto Analytics Platform
+# Real-Time Crypto Analytics Platform
 
-A complete **Real-Time Cryptocurrency Analytics Platform** built using **Python, PostgreSQL, ETL Pipeline, APScheduler, and API Integration**. This project automatically extracts live crypto market data, transforms it, stores it in a database, and updates analytics and dashboards in real-time.
+CoinGecko data for 20 coins, cleaned with Python, stored in SQLite, and displayed
+with Streamlit and Plotly. This implementation does not use PostgreSQL.
 
----
+## Local Setup
 
-# 🎯 Project Objective
+Use Python 3.12 or newer from the repository directory:
 
-The goal of this project is to build a fully automated ETL pipeline that:
-
-* Extracts live cryptocurrency market data from CoinGecko API
-* Transforms and cleans the data
-* Loads data into PostgreSQL database
-* Runs automatically using a scheduler
-* Performs real-time data analysis
-* Supports live dashboard updates
-
-This project demonstrates real-world **Data Engineering and Analytics workflow**.
-
----
-
-# 🏗️ System Architecture
-
-```
-CoinGecko API
-      ↓
-Extract Layer (extract.py)
-      ↓
-Transform Layer (transform.py)
-      ↓
-Load Layer (load.py)
-      ↓
-PostgreSQL Database
-      ↓
-Analysis Layer (analysis.py)
-      ↓
-Dashboard (Streamlit)
+```sh
+python -m venv .venv
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m streamlit run dashboard.py
 ```
 
----
+The dashboard initializes its database and attempts ETL on first load. Active
+sessions refresh at the sidebar interval. API attempts, including failures, are
+cached for five minutes across sessions. When an update fails, stored data stays
+visible with a warning and timestamp. The bundled database is historical sample data.
 
-# 📡 Data Source
+For a separate worker, run `python etl_pipeline.py`. It updates every five minutes
+and saves raw JSON locally. A separate worker is unnecessary for Streamlit;
+in-app updates run only while a session is active.
 
-Public API used:
+## Streamlit Community Cloud
 
-CoinGecko API
-https://api.coingecko.com/api/v3/coins/markets
+1. Push the project files to GitHub.
+2. Create a Streamlit Community Cloud app for
+   `khairbakshnoor-pixel/Real-Time-Crypto-Analytics-Platform`, branch `main`.
+3. Set the entrypoint to `dashboard.py` and select Python 3.12 or newer.
+4. Deploy; dependencies are installed from `requirements.txt`.
 
-Example parameters:
+No secrets are required by this version. The public CoinGecko endpoint may
+rate-limit or reject requests; the app reports failures and keeps stored data.
+SQLite lives beside database.py, independent of the working directory.
+Set CRYPTO_DB_PATH to override it; the parent directory must already exist.
+Cloud local storage is ephemeral, so restarts/redeployments may reset data.
+Persistent external storage is needed for historical retention.
 
-```
-vs_currency=usd
-order=market_cap_desc
-per_page=20
-page=1
-sparkline=false
-```
+References:
+- https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies
+- https://docs.streamlit.io/develop/api-reference/execution-flow/st.fragment
 
-No API key required.
+## Verification
 
----
-
-# 📁 Project Structure
-
-```
-crypto-analytics-platform/
-│
-├── database.py          # Database connection and table creation
-├── extract.py           # Extract crypto data from API
-├── transform.py         # Clean and transform data
-├── load.py              # Load data into PostgreSQL
-├── etl_pipeline.py     # ETL pipeline orchestrator
-├── analysis.py         # Data analysis queries
-├── dashboard.py        # Streamlit dashboard
-├── requirements.txt    # Dependencies
-└── README.md           # Project documentation
+```sh
+python -m unittest discover -s tests -v
+python verify_dashboard.py
 ```
 
----
-
-# ⚙️ Technologies Used
-
-* Python 3.10+
-* PostgreSQL
-* pgAdmin 4
-* APScheduler
-* Pandas
-* Requests
-* Psycopg2
-* Streamlit
-* SQL
-
----
-
-# 🗄️ Database Schema
-
-Table: crypto_market
-
-| Column           | Type               |
-| ---------------- | ------------------ |
-| id               | SERIAL PRIMARY KEY |
-| coin_id          | TEXT               |
-| symbol           | TEXT               |
-| name             | TEXT               |
-| current_price    | FLOAT              |
-| market_cap       | BIGINT             |
-| total_volume     | BIGINT             |
-| price_change_24h | FLOAT              |
-| market_cap_rank  | INTEGER            |
-| extracted_at     | TIMESTAMP          |
-
-Indexes:
-
-* Index on coin_id
-* Index on extracted_at
-
----
-
-# 🔄 ETL Pipeline Workflow
-
-## Extract
-
-* Fetch live crypto data using CoinGecko API
-* Validate API response
-* Parse JSON data
-
-File: `extract.py`
-
----
-
-## Transform
-
-* Remove null values
-* Convert numeric fields
-* Add volatility score
-* Add timestamp
-
-File: `transform.py`
-
----
-
-## Load
-
-* Insert data into PostgreSQL
-* Use batch inserts
-* Handle transactions
-
-File: `load.py`
-
----
-
-## ETL Scheduler
-
-Automatically runs ETL every 5 minutes using APScheduler.
-
-File: `etl_pipeline.py`
-
-Example:
-
-```
-python etl_pipeline.py
-```
-
----
-
-# 📊 Analysis Features
-
-The platform performs real-time analysis including:
-
-* Top 5 gainers
-* Top 5 coins by market cap
-* Average market cap
-* Total crypto market value
-* Most volatile coins
-
-File: `analysis.py`
-
----
-
-# 📈 Dashboard Features
-
-Built using Streamlit.
-
-Dashboard includes:
-
-### KPI Cards
-
-* Total Market Cap
-* Highest Gainer
-* Most Volatile Coin
-* Average Price
-
-### Charts
-
-* Market Cap Chart
-* Price Change Chart
-* Volume Comparison
-* Volatility Ranking
-
-Dashboard auto-refreshes every 60 seconds.
-
-Run dashboard:
-
-```
-streamlit run dashboard.py
-```
-
----
-
-# ⚡ Installation Guide
-
-## Step 1: Clone repository
-
-```
-git clone https://github.com/yourusername/crypto-analytics-platform.git
-cd crypto-analytics-platform
-```
-
----
-
-## Step 2: Install dependencies
-
-```
-pip install -r requirements.txt
-```
-
----
-
-## Step 3: Setup PostgreSQL
-
-Create database:
-
-```
-crypto_db
-```
-
-Update database credentials in `database.py`
-
----
-
-## Step 4: Run ETL pipeline
-
-```
-python etl_pipeline.py
-```
-
----
-
-## Step 5: Run Dashboard
-
-```
-streamlit run dashboard.py
-```
-
----
-
-# 📊 Example Output
-
-* Live crypto data stored in PostgreSQL
-* Automatic updates every 5 minutes
-* Real-time dashboard analytics
-
----
-
-# 🧠 Key Concepts Demonstrated
-
-* ETL Pipeline Design
-* API Integration
-* PostgreSQL Integration
-* Data Transformation
-* Connection Pooling
-* Task Scheduling
-* Real-Time Analytics
-* Dashboard Development
-
----
-
-# 🚀 Future Improvements
-
-* Docker support
-* Cloud deployment
-* FastAPI integration
-* Historical trend analysis
-* Anomaly detection
-
----
-
-# 👨‍💻 Author
-
-Khair Baksh Noor
-
-GitHub: https://github.com/yourusername
-
----
-
-# ⭐ Conclusion
-
-This project demonstrates a complete real-world **Data Engineering pipeline** including data extraction, transformation, loading, analysis, and real-time dashboard visualization.
-
----
-
-If you like this project, give it a ⭐ on GitHub!
+Volatility score is absolute 24-hour percentage change multiplied by volume.
+Market cap totals cover tracked coins only, not the entire crypto market.
